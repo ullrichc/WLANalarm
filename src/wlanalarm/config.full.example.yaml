@@ -1,0 +1,183 @@
+# ---------------------------------------------------------------------------
+# WLANalarm - vollstaendige Konfiguration mit allen Einstellungen
+#
+# ACHTUNG: Jeder Wert, der hier steht, gilt dauerhaft - auch dann, wenn eine
+# neuere Version eine bessere Vorgabe mitbringt. Fuer den taeglichen Gebrauch
+# ist die schlanke Vorlage (wlanalarm init-config ohne --full) die bessere
+# Wahl; diese hier dient als Nachschlagewerk.
+#
+# Alle hier gezeigten Werte sind die Voreinstellungen, sofern nicht anders
+# vermerkt. Weglassen ist also erlaubt und meistens die bessere Wahl - nur
+# `fritzbox.username` und `fritzbox.password` sind zwingend.
+#
+# Zugangsdaten lassen sich mit ${env:NAME} aus der Umgebung ziehen, damit sie
+# nicht in der Datei stehen:  password: "${env:FRITZ_PASSWORD}"
+# ---------------------------------------------------------------------------
+
+fritzbox:
+  address: "http://fritz.box"
+  port: 49000
+  # In der FRITZ!Box unter System > FRITZ!Box-Benutzer einen eigenen Benutzer
+  # anlegen und ihm die Berechtigung "FRITZ!Box Einstellungen" geben.
+  username: "wlanalarm"
+  password: "${env:FRITZ_PASSWORD}"
+  use_tls: false
+  timeout: 10.0
+  # auto  = Mesh-Liste versuchen, sonst TR-064 (empfohlen)
+  # mesh  = nur Mesh-Liste (echte dBm-Werte)
+  # tr064 = nur WLANConfiguration (nur Prozent, deutlich unempfindlicher)
+  source: "auto"
+
+sampling:
+  # Die FRITZ!Box aktualisiert die Mesh-Liste nur alle ein bis zwei Sekunden.
+  # Schneller zu fragen erzeugt Last, aber keine neue Information.
+  interval: 2.0
+  # Kurzes Analysefenster: "passiert gerade etwas?"
+  window_seconds: 12.0
+  # Langes Fenster für die Ruhe-Baseline.
+  baseline_seconds: 900.0
+  warmup_samples: 20
+
+detector:
+  # Gewichte der Einzelmerkmale in der Aktivitätskennzahl.
+  weight_std: 1.0        # Streuung des RSSI
+  weight_jitter: 1.0     # Kurzzeitschwankung von Messpunkt zu Messpunkt
+  weight_range: 0.25     # Spanne im Fenster
+  weight_rate: 0.5       # Schwankung der ausgehandelten Datenrate
+  weight_snr: 0.8        # Schwankung des Störabstands, sofern die Box ihn liefert
+                         # (Feld rx_rsni ab Mesh-Schema 8.x)
+
+  z_full_scale: 8.0            # ab diesem z-Wert ist der Score 1.0
+  min_baseline_scale_db: 0.35  # Untergrenze der Baseline-Streuung
+  min_delta_db: 0.5            # Mindestabstand zur Ruhe-Baseline
+
+  trigger_score: 0.55    # ab hier gilt eine Strecke als ausgelöst
+  clear_score: 0.30      # darunter wieder als ruhig (Hysterese)
+  min_links: 2           # so viele Strecken müssen gleichzeitig ausschlagen
+  strong_score: 0.85
+  allow_single_strong: false   # siehe docs/kalibrierung-und-tuning.md
+  trigger_consecutive: 2       # so viele Messzyklen in Folge
+  clear_seconds: 25.0          # Nachlaufzeit, bis "Ruhe" gemeldet wird
+  max_baseline_activity_db: 6.0
+  stale_after_seconds: 120.0
+
+selection:
+  # Leer = alle Bänder. 5 und 6 GHz reagieren empfindlicher auf Bewegung und
+  # werden bei knappem max_links bevorzugt - 2,4 GHz wird aber nicht
+  # ausgeschlossen, weil dort oft die brauchbaren, dauerhaft aktiven Geräte hängen
+  # (Steckdosen, Luftreiniger, Sensoren können häufig nichts anderes).
+  bands: []
+  always_use_mesh_nodes: true
+  only_configured: false
+  max_links: 12
+  # Geräte, deren Name eines dieser Muster enthält, gelten als mobil.
+  # Die Vorgabe deckt die gängigen Smartphones, Tablets und Notebooks ab;
+  # weglassen heißt: diese Vorgabe gilt.
+  # ignore_name_contains: ["iphone", "android", "pixel", "..."]
+  # Namen wie "Handy-von-Alex" oder "Alex's iPad" gelten als persönlich.
+  ignore_personal_names: true
+  ignore_macs: []
+
+# Feineinstellung je Gerät. Hier eingetragene Geräte umgehen die Filter oben.
+links:
+  - mac: "AA:BB:CC:DD:EE:01"
+    name: "Fernseher Wohnzimmer"
+    zone: "wohnzimmer"
+    weight: 1.0
+  - mac: "AA:BB:CC:DD:EE:02"
+    name: "Repeater Flur"
+    zone: "flur"
+    weight: 1.5          # der Flur ist der wichtigste Laufweg
+  - mac: "AA:BB:CC:DD:EE:03"
+    name: "Drucker Arbeitszimmer"
+    zone: "arbeitszimmer"
+    ignore: true         # schaltet sich nachts ab, taugt nicht als Sensor
+
+alarm:
+  initial_mode: "disarmed"
+  exit_delay: 45.0       # Zeit zum Verlassen der Wohnung
+  entry_delay: 30.0      # Zeit zum Entschärfen, bevor der Alarm losgeht
+  cooldown: 300.0        # Sperrzeit nach einem Alarm
+
+  # Welche Zonen im jeweiligen Modus überwacht werden. Leer = alle.
+  zones_armed_home: ["flur"]
+  zones_armed_night: ["flur", "wohnzimmer"]
+  zones_armed_away: []
+
+  notify_motion_when_disarmed: false
+
+  # Nachtwache: automatisch scharf und morgens wieder unscharf.
+  schedule:
+    enabled: false
+    arm_at: "23:00"
+    disarm_at: "06:30"
+    arm_mode: "armed_night"
+    weekdays: []         # leer = jeden Tag, sonst 0=Montag .. 6=Sonntag
+
+  # Automatik nach Anwesenheit. Setzt voraus, dass die MAC-Randomisierung
+  # der hinterlegten Handys für das eigene WLAN abgeschaltet ist.
+  presence:
+    enabled: false
+    macs: []
+    away_mode: "armed_away"
+    home_mode: "disarmed"
+    away_after_seconds: 300.0
+
+notifiers:
+  - type: "log"
+    min_level: "motion"
+
+  # Push aufs Handy. Thema in der ntfy-App abonnieren.
+  # Auf ntfy.sh kann jeder mitlesen, der den Themennamen kennt - also einen
+  # langen, zufälligen Namen wählen.
+  # - type: "ntfy"
+  #   name: "Handy"
+  #   min_level: "alarm"
+  #   options:
+  #     server: "https://ntfy.sh"
+  #     topic: "wlanalarm-bitte-hier-etwas-langes-zufaelliges"
+
+  # - type: "webhook"
+  #   name: "Home Assistant"
+  #   min_level: "armed_motion"
+  #   options:
+  #     url: "http://homeassistant.local:8123/api/webhook/wlanalarm"
+
+  # - type: "smtp"
+  #   name: "E-Mail"
+  #   min_level: "alarm"
+  #   options:
+  #     host: "smtp.example.org"
+  #     port: 587
+  #     from: "alarm@example.org"
+  #     to: ["ich@example.org"]
+  #     password: "${env:SMTP_PASSWORD}"
+
+  # Legt in Home Assistant automatisch einen Bewegungsmelder und eine
+  # Alarmanlage an. Benötigt: pip install -e ".[mqtt]"
+  # - type: "mqtt"
+  #   name: "MQTT"
+  #   min_level: "motion"
+  #   options:
+  #     host: "192.168.178.20"
+  #     port: 1883
+  #     username: "wlanalarm"
+  #     password: "${env:MQTT_PASSWORD}"
+  #     topic_prefix: "wlanalarm"
+  #     discovery: true
+
+storage:
+  directory: "./state"
+  event_retention_days: 90
+  record_samples: false      # true schreibt alle Rohmesswerte mit
+  sample_retention_days: 3
+
+web:
+  enabled: true
+  # Auf 0.0.0.0 nur zusammen mit einem Token - sonst kann jedes Gerät im
+  # Heimnetz die Anlage entschärfen. Die Konfiguration erzwingt das.
+  host: "127.0.0.1"
+  port: 8723
+  token: ""
+
+log_level: "INFO"

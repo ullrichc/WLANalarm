@@ -1,0 +1,48 @@
+name: Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # 3.11 ist die Untergrenze (Debian 12, Raspberry Pi OS Bookworm),
+        # 3.13 der aktuelle Stand.
+        python-version: ["3.11", "3.12", "3.13"]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+
+      - name: Abhängigkeiten installieren
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev,mqtt]"
+          pip install pyflakes
+
+      - name: Testsuite
+        run: pytest -q
+
+      - name: Statische Prüfung
+        run: python -m pyflakes src/wlanalarm tests
+
+  windows:
+    # Die Tests laufen unter Linux; dieser Lauf belegt, dass das Projekt auch
+    # unter Windows arbeitet - dort brechen Pfade und Zeichenkodierung anders.
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -e ".[dev,mqtt]"
+      - run: pytest -q

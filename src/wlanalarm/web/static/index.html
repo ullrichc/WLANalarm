@@ -1,0 +1,579 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>WLANalarm</title>
+<style>
+  :root {
+    --bg: #f6f7f9; --panel: #ffffff; --border: #e2e5ea; --text: #1c2024;
+    --muted: #6b7280; --accent: #2563eb; --ok: #16a34a; --warn: #d97706;
+    --alarm: #dc2626; --bar: #e5e7eb; --shadow: 0 1px 3px rgba(0,0,0,.07);
+    --hint: #f0f4fa;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #14171a; --panel: #1c2024; --border: #2c3238; --text: #e8eaed;
+      --muted: #9aa3ad; --accent: #60a5fa; --ok: #4ade80; --warn: #fbbf24;
+      --alarm: #f87171; --bar: #2c3238; --shadow: none; --hint: #1a2230;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 1.25rem; background: var(--bg); color: var(--text);
+    font: 15px/1.55 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+  .wrap { max-width: 1000px; margin: 0 auto; }
+  h1 { font-size: 1.3rem; margin: 0 0 1rem; display: flex; align-items: center; gap: .6rem; }
+  h2 { font-size: .95rem; margin: 0; color: var(--muted);
+       text-transform: uppercase; letter-spacing: .04em; }
+  .card { background: var(--panel); border: 1px solid var(--border); border-radius: 10px;
+          padding: 1rem 1.15rem; margin-bottom: 1rem; box-shadow: var(--shadow); }
+  .card > header { margin-bottom: .85rem; }
+  .card > header p { margin: .3rem 0 0; color: var(--muted); font-size: .85rem; }
+  .state { display: flex; flex-wrap: wrap; align-items: baseline; gap: .5rem 1.5rem; }
+  .state .big { font-size: 1.75rem; font-weight: 650; }
+  .state .desc { color: var(--muted); font-size: .9rem; }
+  .dot { width: .7rem; height: .7rem; border-radius: 50%; display: inline-block;
+         background: var(--muted); flex: none; }
+  .dot.ok { background: var(--ok); } .dot.warn { background: var(--warn); }
+  .dot.alarm { background: var(--alarm); animation: pulse 1s infinite; }
+  @keyframes pulse { 50% { opacity: .25; } }
+  .meta { color: var(--muted); font-size: .85rem; }
+  .modes-intro { margin: 1.1rem 0 .5rem; font-size: .85rem; color: var(--muted); }
+  .modes { display: flex; flex-wrap: wrap; gap: .5rem; }
+  .modes-note { margin: .6rem 0 0; font-size: .85rem; color: var(--muted); }
+  button { font: inherit; padding: .5rem .9rem; border-radius: 7px; cursor: pointer;
+           border: 1px solid var(--border); background: var(--bg); color: var(--text);
+           text-align: left; display: flex; flex-direction: column; gap: .1rem; }
+  button b { font-weight: 600; }
+  button small { font-size: .75rem; opacity: .75; font-weight: 400; }
+  button:hover { border-color: var(--accent); }
+  button[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: #fff; }
+  button[aria-pressed="true"] small { opacity: .9; }
+  #doing { margin: 0; font-size: .92rem; }
+  #doing code { background: var(--bar); padding: .1rem .3rem; border-radius: 4px;
+                font-size: .85em; }
+  .unused-intro { color: var(--muted); font-size: .87rem; margin: .8rem 0 .6rem; }
+  .unused-intro code { background: var(--bar); padding: .1rem .3rem; border-radius: 4px; }
+  #unused td { font-size: .85rem; color: var(--muted); }
+  table { width: 100%; border-collapse: collapse; font-size: .9rem; }
+  th { text-align: left; font-weight: 600; color: var(--muted); font-size: .78rem;
+       text-transform: uppercase; letter-spacing: .03em; padding: 0 .5rem .45rem 0; }
+  th[title] { cursor: help; border-bottom: 1px dotted var(--muted); }
+  td { padding: .5rem .5rem; border-top: 1px solid var(--border); vertical-align: middle; }
+  td:first-child, th:first-child { padding-left: 0; }
+  .bar { position: relative; height: 9px; background: var(--bar); border-radius: 5px;
+         min-width: 80px; overflow: hidden; }
+  .bar > i { position: absolute; inset: 0 auto 0 0; border-radius: 5px;
+             background: var(--accent); transition: width .3s; }
+  .bar.hot > i { background: var(--alarm); }
+  /* Marke für die Auslöseschwelle: macht sichtbar, wie weit ein Wert davon weg ist. */
+  .bar > b { position: absolute; top: -2px; bottom: -2px; width: 2px;
+             background: var(--muted); opacity: .55; }
+  .scorecell { display: flex; align-items: center; gap: .55rem; }
+  .scorecell span { font-variant-numeric: tabular-nums; font-size: .82rem;
+                    color: var(--muted); min-width: 2.6rem; text-align: right; }
+  .num { font-variant-numeric: tabular-nums; }
+  .tag { font-size: .72rem; padding: .1rem .45rem; border-radius: 4px;
+         border: 1px solid var(--border); color: var(--muted); white-space: nowrap; }
+  .events li { list-style: none; padding: .5rem 0; border-top: 1px solid var(--border);
+               display: flex; gap: .75rem; align-items: baseline; }
+  .events { margin: 0; padding: 0; }
+  .events time { color: var(--muted); font-size: .82rem; white-space: nowrap;
+                 font-variant-numeric: tabular-nums; }
+  .events .lvl-alarm { color: var(--alarm); font-weight: 600; }
+  .events .lvl-armed_motion { color: var(--warn); }
+  svg.spark { width: 100%; height: 70px; display: block; }
+  .sparkwrap { position: relative; }
+  .sparkwrap .axis { position: absolute; right: .3rem; font-size: .7rem;
+                     color: var(--muted); font-variant-numeric: tabular-nums; }
+  .sparkwrap .axis.top { top: -2px; } .sparkwrap .axis.bottom { bottom: -2px; }
+  .err { color: var(--alarm); font-size: .85rem; margin-top: .6rem; }
+  .empty { color: var(--muted); font-size: .88rem; padding: .5rem 0; }
+  .hint { background: var(--hint); border-radius: 8px; padding: .7rem .9rem;
+          font-size: .87rem; margin-top: .85rem; }
+  details { margin-top: .85rem; font-size: .88rem; }
+  details summary { cursor: pointer; color: var(--accent); font-weight: 500; }
+  details dl { display: grid; grid-template-columns: max-content 1fr;
+               gap: .45rem .9rem; margin: .8rem 0 0; }
+  details dt { font-weight: 600; }
+  details dd { margin: 0; color: var(--muted); }
+  @media (max-width: 640px) {
+    details dl { grid-template-columns: 1fr; gap: .15rem; }
+    details dd { margin-bottom: .5rem; }
+    .hide-narrow { display: none; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1><span class="dot" id="dot"></span> WLANalarm</h1>
+
+  <div class="card">
+    <div class="state">
+      <span class="big" id="state">–</span>
+      <span class="desc" id="state-desc"></span>
+      <span class="meta" id="stats" style="margin-left:auto"></span>
+    </div>
+    <p class="modes-intro">Betriebsart wählen:</p>
+    <div class="modes">
+      <button data-mode="disarmed">
+        <b>Unscharf</b><small>Misst weiter, löst nicht aus</small>
+      </button>
+      <button data-mode="armed_home">
+        <b>Anwesend</b><small>Scharf, während jemand da ist</small>
+      </button>
+      <button data-mode="armed_night">
+        <b>Nachtwache</b><small>Scharf während der Nacht</small>
+      </button>
+      <button data-mode="armed_away">
+        <b>Abwesend</b><small>Scharf, niemand zu Hause</small>
+      </button>
+    </div>
+    <p class="modes-note" id="modes-note"></p>
+    <div class="hint" id="warmup" hidden></div>
+    <div class="err" id="error" hidden></div>
+  </div>
+
+  <div class="card" id="doing-card">
+    <header>
+      <h2>Was gerade geschieht</h2>
+    </header>
+    <p id="doing"></p>
+  </div>
+
+  <div class="card">
+    <header>
+      <h2>Bewegungsscore</h2>
+      <p>Wie stark sich die Funkstrecken gerade verändern, über die letzten Minuten.
+         0 = Ruhe, 100 % = eindeutige Bewegung.</p>
+    </header>
+    <div class="sparkwrap">
+      <span class="axis top">100 %</span>
+      <span class="axis bottom">0</span>
+      <svg class="spark" id="spark" viewBox="0 0 600 70" preserveAspectRatio="none" aria-hidden="true"></svg>
+    </div>
+  </div>
+
+  <div class="card">
+    <header>
+      <h2>Funkstrecken</h2>
+      <p id="links-intro">Jede Zeile ist eine Funkverbindung zwischen der FRITZ!Box
+         (oder einem Repeater) und einem Gerät – ein virtueller Bewegungsmelder.
+         Wer die Luftlinie dazwischen kreuzt, stört das Signal.</p>
+    </header>
+    <table>
+      <thead><tr>
+        <th title="Die Gegenstelle der Funkstrecke. Nur fest stehende, dauerhaft eingeschaltete Geräte taugen.">Gerät</th>
+        <th class="hide-narrow" title="Frequenzband. 5 und 6 GHz reagieren feiner auf Bewegung als 2,4 GHz.">Band</th>
+        <th class="hide-narrow" title="Raumzuordnung. Bestimmt, welche Modi diese Strecke überwachen.">Zone</th>
+        <th title="Empfangsstärke in dBm. Näher an 0 ist stärker; unter -70 dBm wird eine Strecke unruhig.">Signal</th>
+        <th style="width:30%" title="Wie stark diese Strecke gerade ausschlägt, verglichen mit ihrem eigenen Ruhezustand. Der Strich markiert die Auslöseschwelle.">Ausschlag</th>
+        <th class="num" title="Wie viele Streubreiten über dem Ruhewert. 0-2 ist normal, ab etwa 4 passiert etwas.">Abweichung</th>
+      </tr></thead>
+      <tbody id="links"></tbody>
+    </table>
+    <div class="empty" id="links-empty">Noch keine Messwerte …</div>
+
+    <details id="unused-box" hidden>
+      <summary id="unused-summary"></summary>
+      <p class="unused-intro">Diese Geräte sind im WLAN, dienen aber nicht als
+         Bewegungsmelder. Möchten Sie eines davon doch verwenden – oder eines der
+         oben genannten ausschließen –, tragen Sie es in <code>config.yaml</code>
+         unter <code>links:</code> ein. Die passenden Zeilen erzeugt
+         <code>wlanalarm discover --yaml</code>.</p>
+      <table>
+        <thead><tr><th>Gerät</th><th>Band</th><th>Grund</th></tr></thead>
+        <tbody id="unused"></tbody>
+      </table>
+    </details>
+
+    <details>
+      <summary>Was bedeuten diese Zahlen?</summary>
+      <dl>
+        <dt>Signal</dt>
+        <dd>Empfangsstärke in dBm, immer negativ. −30 ist sehr stark (Gerät steht
+            fast neben der Box), −70 ist schwach. Unter −70 dBm schwankt der Wert
+            von allein so stark, dass die Strecke als Sensor kaum noch taugt.</dd>
+
+        <dt>Ausschlag</dt>
+        <dd>0 bis 100 %. Wie unruhig diese Strecke gerade ist – verglichen mit
+            ihrem <em>eigenen</em> Ruheverhalten, nicht mit anderen Strecken.
+            Jede Strecke bekommt so ihre eigene Schwelle, weil eine Verbindung
+            ins Nebenzimmer ganz anders rauscht als eine zum Gerät neben der Box.
+            Der senkrechte Strich markiert, ab wo die Strecke als ausgelöst gilt.</dd>
+
+        <dt>Abweichung</dt>
+        <dd>Derselbe Sachverhalt als Zahl: um wie viele Streubreiten der aktuelle
+            Wert über dem Ruhezustand liegt. 0 bis 2 ist Normalbetrieb, ab etwa 4
+            bewegt sich etwas, 8 und mehr bedeutet volle Auslenkung. Negative
+            Werte sind unbedenklich – die Strecke ist dann gerade ruhiger als im
+            Durchschnitt. „–“ heißt, dass diese Strecke noch zu wenige Messwerte
+            hat.</dd>
+
+        <dt>Alarm</dt>
+        <dd id="explain-alarm">Ein einzelner Ausschlag genügt nicht. Erst wenn
+            mehrere Strecken gleichzeitig ausschlagen, gilt Bewegung als erkannt –
+            ein Gerät allein könnte auch nur ein Firmware-Update laden.</dd>
+
+        <dt>unruhig</dt>
+        <dd>Diese Kennzeichnung heißt: Die Strecke schwankt schon im Ruhezustand
+            so stark, dass sie nicht bewertet wird. Meist ein Gerät mit schwachem
+            Signal oder eines, das sich zwischendurch schlafen legt.</dd>
+      </dl>
+    </details>
+  </div>
+
+  <div class="card">
+    <header>
+      <h2>Ereignisse</h2>
+      <p>Bewegungsmeldungen, Moduswechsel und Alarme – die jüngsten zuerst.</p>
+    </header>
+    <ul class="events" id="events"></ul>
+    <div class="empty" id="events-empty">Noch keine Ereignisse.</div>
+  </div>
+</div>
+
+<script>
+"use strict";
+// Token aus der Adresszeile übernehmen (?token=...), damit das Dashboard auch
+// bei abgesichertem Server ohne weitere Eingabe funktioniert.
+const TOKEN = new URLSearchParams(location.search).get("token") || "";
+const headers = TOKEN ? { Authorization: "Bearer " + TOKEN } : {};
+
+const LABEL = {
+  disarmed: "Unscharf", arming: "Wird scharf …", armed_home: "Anwesend",
+  armed_away: "Abwesend", armed_night: "Nachtwache",
+  pending: "Bewegung erkannt", alarm: "ALARM"
+};
+
+// Was die gewählte Betriebsart konkret bedeutet - sichtbar unter der Auswahl,
+// nicht nur als Tooltip, den auf Mobilgeräten niemand zu sehen bekommt.
+const MODUS_ERKLAERUNG = {
+  disarmed: "Die Messung läuft weiter und das Dashboard zeigt alles an, " +
+            "aber es wird kein Alarm ausgelöst und nichts verschickt.",
+  armed_home: "Überwacht nur die Zonen, die unter alarm.zones_armed_home stehen – " +
+              "üblicherweise Eingang und Flur, damit Bewegung in bewohnten Räumen " +
+              "nichts auslöst.",
+  armed_night: "Überwacht die Zonen aus alarm.zones_armed_night. Lässt sich unter " +
+               "alarm.schedule automatisch zu festen Uhrzeiten ein- und ausschalten.",
+  armed_away: "Überwacht alle Zonen. Beim Einschalten läuft zunächst die " +
+              "Ausgangsverzögerung, damit die eigene Bewegung beim Verlassen der " +
+              "Wohnung nichts auslöst."
+};
+
+// Ein Satz je Zustand – damit niemand raten muss, was gerade passiert.
+const BESCHREIBUNG = {
+  disarmed: "Es wird gemessen, aber nichts löst aus.",
+  arming: "Ausgangsverzögerung läuft – Zeit, die Wohnung zu verlassen.",
+  armed_home: "Scharf, während jemand zu Hause ist.",
+  armed_away: "Scharf – niemand zu Hause.",
+  armed_night: "Nachtwache aktiv.",
+  pending: "Eingangsverzögerung läuft. Jetzt entschärfen, sonst gibt es Alarm.",
+  alarm: "Ausgelöst. Bleibt bestehen, bis Sie entschärfen."
+};
+
+const $ = (id) => document.getElementById(id);
+
+function showError(message) {
+  const box = $("error");
+  box.hidden = !message;
+  box.textContent = message || "";
+}
+
+async function api(path, options) {
+  const response = await fetch(path, { headers, ...options });
+  if (!response.ok) {
+    const body = await response.json().catch(() => ({}));
+    throw new Error(body.error || ("HTTP " + response.status));
+  }
+  return response.json();
+}
+
+function renderState(status) {
+  const state = status.state;
+  $("state").textContent = LABEL[state] || state;
+
+  let desc = BESCHREIBUNG[state] || "";
+  if (status.remaining > 0) desc += ` Noch ${Math.round(status.remaining)} Sekunden.`;
+  if (status.motion && state !== "alarm" && state !== "pending") {
+    desc += " Gerade wird Bewegung erkannt.";
+  }
+  if (status.cooldown > 0) {
+    desc += ` Sperrzeit nach dem letzten Alarm: noch ${Math.round(status.cooldown)} s.`;
+  }
+  $("state-desc").textContent = desc;
+
+  const dot = $("dot");
+  dot.className = "dot " + (state === "alarm" ? "alarm"
+    : state === "pending" || status.motion ? "warn"
+    : state === "disarmed" ? "" : "ok");
+
+  $("stats").textContent =
+    `${status.link_count} Funkstrecken · ${status.ticks} Messungen` +
+    (status.errors ? ` · ${status.errors} Fehler` : "");
+
+  // Aufwärmphase erklären, statt den Nutzer über leere Werte rätseln zu lassen.
+  const warmup = $("warmup");
+  if (!status.ready) {
+    warmup.hidden = false;
+    warmup.textContent =
+      "Aufwärmphase: WLANalarm lernt gerade, wie ruhig jede Funkstrecke normalerweise " +
+      "ist. Solange wird nichts gemeldet. Das dauert einige Minuten – wenn Sie noch " +
+      "nicht kalibriert haben, holen Sie das mit „wlanalarm calibrate --minutes 15“ nach.";
+  } else {
+    warmup.hidden = true;
+  }
+
+  let gewaehlt = "disarmed";
+  for (const button of document.querySelectorAll("[data-mode]")) {
+    const active = button.dataset.mode === (state === "disarmed" ? "disarmed" : status.mode);
+    button.setAttribute("aria-pressed", String(active));
+    if (active) gewaehlt = button.dataset.mode;
+  }
+  $("modes-note").textContent = MODUS_ERKLAERUNG[gewaehlt] || "";
+
+  $("doing").innerHTML = beschreibeVorgang(status);
+  showError(status.last_error && status.errors ? "Letzter Messfehler: " + status.last_error : "");
+
+  const minLinks = status.min_links || 2;
+  $("explain-alarm").textContent =
+    `Ein einzelner Ausschlag genügt nicht: Erst wenn ${minLinks} Strecken ` +
+    `gleichzeitig über die Schwelle gehen, gilt Bewegung als erkannt. Ein Gerät ` +
+    `allein könnte auch nur ein Firmware-Update laden oder in den Stromsparmodus ` +
+    `wechseln. Einstellbar über detector.min_links.`;
+}
+
+function esc(text) {
+  const d = document.createElement("div");
+  d.textContent = String(text);
+  return d.innerHTML;
+}
+
+/**
+ * Beschreibt in einem Absatz, was das Programm im Moment tut. Ohne diese
+ * Erklärung bleibt unklar, ob eine ruhige Anzeige bedeutet, dass alles in
+ * Ordnung ist - oder dass gar nichts gemessen wird.
+ */
+function beschreibeVorgang(status) {
+  const takt = status.link_count === 1 ? "Funkstrecke" : "Funkstrecken";
+  const teile = [];
+
+  teile.push(
+    `WLANalarm fragt die FRITZ!Box laufend nach den Messwerten von ` +
+    `<b>${status.link_count} ${takt}</b> und vergleicht sie mit deren ` +
+    `Ruheverhalten. Bisher ${status.ticks} Messungen.`
+  );
+
+  if (!status.ready) {
+    teile.push(
+      "Zurzeit läuft die <b>Aufwärmphase</b>: Das Ruheverhalten wird erst " +
+      "erlernt, deshalb wird noch nichts gemeldet."
+    );
+  } else if (status.motion) {
+    teile.push(
+      `<b>Zurzeit wird Bewegung erkannt.</b> Dafür müssen mindestens ` +
+      `${status.min_links} Strecken gleichzeitig ausschlagen.`
+    );
+  } else {
+    teile.push(
+      `Zurzeit ist es ruhig. Für eine Meldung müssten mindestens ` +
+      `<b>${status.min_links} Strecken gleichzeitig</b> über ` +
+      `${Math.round((status.trigger_score || 0) * 100)} % ausschlagen.`
+    );
+  }
+
+  if (status.state === "disarmed") {
+    teile.push("Weil die Anlage unscharf ist, führt eine Bewegung zu keinem Alarm.");
+  } else if (status.state === "arming") {
+    teile.push(
+      `Die Anlage schaltet in ${Math.round(status.remaining)} Sekunden scharf. ` +
+      `Bewegung in dieser Zeit wird nicht gewertet.`
+    );
+  } else if (status.state === "pending") {
+    teile.push(
+      `<b>Die Eingangsverzögerung läuft.</b> In ${Math.round(status.remaining)} ` +
+      `Sekunden wird Alarm ausgelöst, sofern Sie nicht vorher entschärfen.`
+    );
+  } else if (status.state === "alarm") {
+    teile.push("<b>Der Alarm wurde ausgelöst</b> und bleibt bestehen, bis Sie entschärfen.");
+  } else {
+    teile.push("Die Anlage ist scharf. Erkannte Bewegung führt zum Alarm.");
+  }
+
+  if (status.errors) {
+    teile.push(
+      `Bei ${status.errors} Abfragen ist ein Fehler aufgetreten` +
+      (status.last_error ? `: <code>${esc(status.last_error)}</code>` : ".")
+    );
+  }
+  return teile.join(" ");
+}
+
+function renderUnused(candidates) {
+  // Verworfene Geräte samt Begründung - dieselbe Auskunft wie bei
+  // "wlanalarm discover", nur ohne Kommandozeile.
+  const verworfen = (candidates || []).filter((c) => !c.selected);
+  const box = $("unused-box");
+  box.hidden = verworfen.length === 0;
+  if (!verworfen.length) return;
+  $("unused-summary").textContent =
+    `${verworfen.length} weitere Geräte werden nicht als Bewegungsmelder verwendet`;
+  $("unused").replaceChildren(...verworfen.map((c) => {
+    const row = document.createElement("tr");
+    for (const wert of [c.peer_name || c.peer_mac, c.band, c.reason]) {
+      const cell = document.createElement("td");
+      cell.textContent = wert;
+      row.append(cell);
+    }
+    return row;
+  }));
+}
+
+function renderLinks(links, threshold) {
+  const body = $("links");
+  $("links-empty").hidden = links.length > 0;
+  body.replaceChildren(...links.map((link) => {
+    const row = document.createElement("tr");
+
+    const geraet = document.createElement("td");
+    geraet.textContent = link.peer_name || link.peer_mac;
+    if (link.unstable) {
+      const tag = document.createElement("span");
+      tag.className = "tag";
+      tag.textContent = "unruhig";
+      tag.title = "Schwankt schon in Ruhe zu stark – wird nicht bewertet.";
+      geraet.append(" ", tag);
+    }
+
+    const band = document.createElement("td");
+    band.className = "hide-narrow";
+    band.textContent = link.band;
+
+    const zone = document.createElement("td");
+    zone.className = "hide-narrow";
+    zone.textContent = link.zone;
+
+    const signal = document.createElement("td");
+    signal.className = "num";
+    signal.textContent = link.rssi_dbm === null ? "–" : link.rssi_dbm + " dBm";
+    if (link.rssi_dbm !== null && link.rssi_dbm < -70) {
+      signal.title = "Schwaches Signal – die Strecke schwankt dadurch von allein stark.";
+      signal.style.color = "var(--warn)";
+    }
+
+    const ausschlag = document.createElement("td");
+    const zelle = document.createElement("div");
+    zelle.className = "scorecell";
+    const bar = document.createElement("div");
+    bar.className = "bar" + (link.triggered ? " hot" : "");
+    const fill = document.createElement("i");
+    fill.style.width = Math.round(link.score * 100) + "%";
+    bar.append(fill);
+    if (threshold) {
+      const mark = document.createElement("b");
+      mark.style.left = Math.round(threshold * 100) + "%";
+      mark.title = `Auslöseschwelle: ${Math.round(threshold * 100)} %`;
+      bar.append(mark);
+    }
+    const wert = document.createElement("span");
+    wert.textContent = link.ready ? Math.round(link.score * 100) + " %" : "–";
+    zelle.append(bar, wert);
+    ausschlag.append(zelle);
+
+    const z = document.createElement("td");
+    z.className = "num";
+    z.textContent = link.ready ? link.z.toFixed(1) : "–";
+    if (!link.ready) z.title = "Noch zu wenige Messwerte für ein Urteil.";
+
+    row.append(geraet, band, zone, signal, ausschlag, z);
+    return row;
+  }));
+}
+
+function renderSpark(history, threshold) {
+  const svg = $("spark");
+  svg.replaceChildren();
+  if (history.length < 2) return;
+  const width = 600, height = 70, step = width / (history.length - 1);
+  const y = (score) => height - 3 - Math.max(0, Math.min(1, score)) * (height - 8);
+  const points = history.map((point, index) => `${(index * step).toFixed(1)},${y(point.score).toFixed(1)}`);
+  const ns = "http://www.w3.org/2000/svg";
+
+  if (threshold) {
+    const line = document.createElementNS(ns, "line");
+    line.setAttribute("x1", 0); line.setAttribute("x2", width);
+    line.setAttribute("y1", y(threshold)); line.setAttribute("y2", y(threshold));
+    line.setAttribute("stroke", "currentColor");
+    line.setAttribute("stroke-dasharray", "4 4");
+    line.setAttribute("opacity", ".35");
+    svg.append(line);
+  }
+
+  const area = document.createElementNS(ns, "polygon");
+  area.setAttribute("points", `0,${height} ${points.join(" ")} ${width},${height}`);
+  area.setAttribute("fill", "currentColor");
+  area.setAttribute("opacity", ".12");
+
+  const line = document.createElementNS(ns, "polyline");
+  line.setAttribute("points", points.join(" "));
+  line.setAttribute("fill", "none");
+  line.setAttribute("stroke", "currentColor");
+  line.setAttribute("stroke-width", "1.5");
+
+  svg.style.color = history.some((p) => p.motion) ? "var(--warn)" : "var(--accent)";
+  svg.append(area, line);
+}
+
+function renderEvents(events) {
+  const list = $("events");
+  $("events-empty").hidden = events.length > 0;
+  list.replaceChildren(...events.map((event) => {
+    const item = document.createElement("li");
+    const time = document.createElement("time");
+    time.textContent = new Date(event.ts * 1000).toLocaleString("de-DE");
+    const text = document.createElement("span");
+    text.className = "lvl-" + event.level;
+    text.textContent = event.message;
+    item.append(time, text);
+    return item;
+  }));
+}
+
+async function refresh() {
+  try {
+    const [status, events] = await Promise.all([
+      api("/api/status"),
+      api("/api/events?limit=25")
+    ]);
+    renderState(status);
+    renderLinks(status.links || [], status.trigger_score);
+    renderUnused(status.candidates);
+    renderSpark(status.history || [], status.trigger_score);
+    renderEvents(events);
+  } catch (error) {
+    showError("Keine Verbindung zum Dienst: " + error.message);
+  }
+}
+
+document.querySelector(".modes").addEventListener("click", async (event) => {
+  const button = event.target.closest("[data-mode]");
+  if (!button) return;
+  try {
+    await api("/api/mode", {
+      method: "POST",
+      headers: { ...headers, "Content-Type": "application/json" },
+      body: JSON.stringify({ mode: button.dataset.mode })
+    });
+    refresh();
+  } catch (error) {
+    showError("Umschalten fehlgeschlagen: " + error.message);
+  }
+});
+
+refresh();
+setInterval(refresh, 2000);
+</script>
+</body>
+</html>

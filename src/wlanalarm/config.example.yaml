@@ -1,0 +1,74 @@
+# ---------------------------------------------------------------------------
+# WLANalarm - Konfiguration
+#
+# Alles, was hier nicht steht, verwendet die eingebaute Voreinstellung. Das ist
+# Absicht: Was Sie hier eintragen, gilt für immer - auch wenn eine neuere
+# Version bessere Vorgaben mitbringt. Tragen Sie deshalb nur ein, was Sie
+# wirklich abweichend brauchen.
+#
+# Die vollständige Liste aller Einstellungen mit Erklärung:
+#   wlanalarm init-config config-vollstaendig.yaml --full
+# ---------------------------------------------------------------------------
+
+fritzbox:
+  # In der FRITZ!Box unter System > FRITZ!Box-Benutzer einen Benutzer anlegen
+  # und ihm die Berechtigung "FRITZ!Box Einstellungen" geben.
+  username: "wlanalarm"
+  # Das Kennwort kommt aus der Umgebung, damit es nicht in dieser Datei steht.
+  #   Linux/macOS:  export FRITZ_PASSWORD='...'
+  #   Windows:      $env:FRITZ_PASSWORD = '...'
+  password: "${env:FRITZ_PASSWORD}"
+  # Falls die Box nicht unter fritz.box erreichbar ist:
+  # address: "http://192.168.178.1"
+
+storage:
+  directory: "./state"
+
+web:
+  # Auf 0.0.0.0 nur zusammen mit einem token - sonst kann jedes Gerät im
+  # Heimnetz die Anlage entschärfen. Die Konfiguration erzwingt das.
+  host: "127.0.0.1"
+  port: 8723
+
+notifiers:
+  - type: "log"
+    min_level: "motion"
+
+  # Push aufs Handy: ntfy-App installieren, Thema abonnieren, fertig.
+  # Auf ntfy.sh kann jeder mitlesen, der den Themennamen kennt - also einen
+  # langen, zufälligen Namen wählen.
+  # - type: "ntfy"
+  #   min_level: "alarm"
+  #   options:
+  #     topic: "wlanalarm-bitte-hier-etwas-langes-zufaelliges"
+
+# ---------------------------------------------------------------------------
+# Ab hier: nur bei Bedarf. Die Voreinstellungen taugen für die meisten Fälle.
+# ---------------------------------------------------------------------------
+
+# Einzelne Geräte feineinstellen. Die MAC-Adressen zeigt 'wlanalarm discover';
+# einen fertigen Block erzeugt 'wlanalarm discover --yaml'.
+# links:
+#   - mac: "AA:BB:CC:DD:EE:01"
+#     name: "Fernseher Wohnzimmer"
+#     zone: "wohnzimmer"
+#   - mac: "AA:BB:CC:DD:EE:02"
+#     name: "Drucker"
+#     ignore: true          # schaltet sich nachts ab, taugt nicht als Sensor
+
+# alarm:
+#   exit_delay: 45.0        # Zeit zum Verlassen der Wohnung
+#   entry_delay: 30.0       # Zeit zum Entschärfen, bevor der Alarm losgeht
+#   zones_armed_home: ["flur"]
+#   schedule:               # Nachtwache
+#     enabled: true
+#     arm_at: "23:00"
+#     disarm_at: "06:30"
+
+# Gegen Fehlalarme ist min_links die wirksamste Stellschraube: So viele
+# Funkstrecken müssen gleichzeitig ausschlagen. Siehe
+# docs/kalibrierung-und-tuning.md
+# detector:
+#   min_links: 2
+
+# log_level: "INFO"

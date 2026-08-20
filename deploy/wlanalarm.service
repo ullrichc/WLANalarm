@@ -1,0 +1,48 @@
+# Vollstaendige Anleitung: docs/linux-raspberry-pi.md
+#
+# Diese Unit setzt die dort beschriebene Installation voraus:
+#   Dienstbenutzer  wlanalarm
+#   Programm        /opt/wlanalarm/venv/bin/wlanalarm  (fest installiert, nicht
+#                   editierbar - ProtectHome=true sperrt Benutzerverzeichnisse)
+#   Konfiguration   /etc/wlanalarm/config.yaml
+#   Zustand         /var/lib/wlanalarm  (storage.directory absolut setzen)
+#   Geheimnisse     /etc/wlanalarm/env, Rechte 0640
+
+[Unit]
+Description=WLANalarm - Bewegungserkennung über die WLAN-Funkstrecken der FRITZ!Box
+Documentation=https://github.com/ullrichc/WLANalarm
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=wlanalarm
+Group=wlanalarm
+WorkingDirectory=/var/lib/wlanalarm
+# Der Bindestrich macht die Datei optional: Wer das Kennwort anders setzt,
+# soll keinen Startfehler bekommen.
+EnvironmentFile=-/etc/wlanalarm/env
+ExecStart=/opt/wlanalarm/venv/bin/wlanalarm run -c /etc/wlanalarm/config.yaml
+Restart=always
+RestartSec=10
+
+# Der Dienst liest nur aus dem Netz und schreibt in ein Verzeichnis - alles
+# andere kann ihm entzogen werden.
+NoNewPrivileges=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectSystem=strict
+ProtectHome=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+RestrictNamespaces=true
+LockPersonality=true
+MemoryDenyWriteExecute=true
+SystemCallArchitectures=native
+SystemCallFilter=@system-service
+ReadWritePaths=/var/lib/wlanalarm
+
+[Install]
+WantedBy=multi-user.target

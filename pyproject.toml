@@ -1,0 +1,37 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "wlanalarm"
+version = "0.1.0"
+description = "Bewegungs- und Einbruchserkennung per WLAN-Funkstrecken einer AVM FRITZ!Box"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { file = "LICENSE" }
+authors = [{ name = "WLANalarm contributors" }]
+keywords = ["wifi-sensing", "fritzbox", "motion-detection", "tr-064", "home-automation"]
+
+dependencies = [
+    "fritzconnection>=1.13",
+    "requests>=2.28",
+    "PyYAML>=6.0",
+]
+
+[project.optional-dependencies]
+mqtt = ["paho-mqtt>=1.6"]
+dev = ["pytest>=7.4"]
+
+[project.scripts]
+wlanalarm = "wlanalarm.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+wlanalarm = ["web/static/*", "config.example.yaml", "config.full.example.yaml"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+filterwarnings = ["error::DeprecationWarning:wlanalarm.*"]

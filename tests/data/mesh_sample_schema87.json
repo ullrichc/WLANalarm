@@ -1,0 +1,210 @@
+{
+  "schema_version": "8.7",
+  "nodes": [
+    {
+      "uid": "n-1",
+      "device_name": "fritz.box",
+      "device_model": "FRITZ!Box 5690 Pro",
+      "device_mac_address": "34:31:C4:00:00:01",
+      "is_meshed": true,
+      "mesh_role": "master",
+      "node_interfaces": [
+        {
+          "uid": "ni-6g",
+          "name": "AP:6G:0",
+          "type": "WLAN",
+          "opmode": "AP",
+          "mac_address": "34:31:C4:00:00:06",
+          "ssid": "Zuhause",
+          "security": "WPA3PSK",
+          "current_channel": 5,
+          "current_channel_info": {
+            "primary_freq": 5975000,
+            "primary_center": 6105000,
+            "channel_width": "320 MHz"
+          },
+          "anpi": -92,
+          "phymodes": ["ax", "be"],
+          "node_links": [
+            {
+              "uid": "nl-1",
+              "type": "WLAN",
+              "state": "CONNECTED",
+              "node_1_uid": "n-1",
+              "node_2_uid": "n-2",
+              "node_interface_1_uid": "ni-6g",
+              "node_interface_2_uid": "ni-speaker",
+              "cur_data_rate_rx": 1170000,
+              "cur_data_rate_tx": 1170000,
+              "max_data_rate_rx": 2402000,
+              "max_data_rate_tx": 2402000,
+              "cur_availability_rx": 100,
+              "cur_availability_tx": 100,
+              "rx_rcpi": -52,
+              "rx_rsni": 38,
+              "tx_rcpi": 255,
+              "tx_rsni": 255,
+              "last_connected": 1787142582
+            }
+          ]
+        },
+        {
+          "uid": "ni-24g",
+          "name": "AP:2G:0",
+          "type": "WLAN",
+          "opmode": "AP",
+          "mac_address": "34:31:C4:00:00:04",
+          "current_channel": 6,
+          "current_channel_info": { "primary_freq": 2437000, "channel_width": "20 MHz" },
+          "anpi": -89,
+          "node_links": [
+            {
+              "uid": "nl-2",
+              "type": "WLAN",
+              "state": "CONNECTED",
+              "node_1_uid": "n-1",
+              "node_2_uid": "n-3",
+              "node_interface_1_uid": "ni-24g",
+              "node_interface_2_uid": "ni-purifier",
+              "cur_data_rate_rx": 58500,
+              "cur_data_rate_tx": 28900,
+              "max_data_rate_rx": 72200,
+              "max_data_rate_tx": 72200,
+              "cur_availability_rx": 70,
+              "cur_availability_tx": 70,
+              "rx_rcpi": -58,
+              "rx_rsni": 31,
+              "tx_rcpi": 255,
+              "tx_rsni": 255
+            },
+            {
+              "uid": "nl-3",
+              "type": "WLAN",
+              "state": "DISCONNECTED",
+              "node_1_uid": "n-1",
+              "node_2_uid": "n-4",
+              "node_interface_1_uid": "ni-24g",
+              "node_interface_2_uid": "ni-alt",
+              "rx_rcpi": 255,
+              "rx_rsni": 255
+            }
+          ]
+        },
+        {
+          "uid": "ni-lan",
+          "name": "LAN:1",
+          "type": "LAN",
+          "mac_address": "34:31:C4:00:00:01",
+          "node_links": [
+            {
+              "uid": "nl-lan",
+              "type": "LAN",
+              "state": "CONNECTED",
+              "node_1_uid": "n-1",
+              "node_2_uid": "n-5",
+              "node_interface_1_uid": "ni-lan",
+              "node_interface_2_uid": "ni-rep-lan"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "uid": "n-2",
+      "device_name": "Luftreiniger Wohnzimmer",
+      "device_mac_address": "AA:BB:CC:00:00:02",
+      "mesh_role": "unknown",
+      "node_interfaces": [
+        {
+          "uid": "ni-speaker",
+          "name": "STA:6G:0",
+          "type": "WLAN",
+          "opmode": "STA",
+          "mac_address": "AA:BB:CC:00:00:02",
+          "node_links": []
+        }
+      ]
+    },
+    {
+      "uid": "n-3",
+      "device_name": "Luftreiniger Flur",
+      "device_mac_address": "AA:BB:CC:00:00:03",
+      "mesh_role": "unknown",
+      "node_interfaces": [
+        {
+          "uid": "ni-purifier",
+          "name": "STA:2G:0",
+          "type": "WLAN",
+          "opmode": "STA",
+          "mac_address": "AA:BB:CC:00:00:03",
+          "node_links": []
+        }
+      ]
+    },
+    {
+      "uid": "n-4",
+      "device_name": "Altes Geraet",
+      "device_mac_address": "AA:BB:CC:00:00:04",
+      "mesh_role": "unknown",
+      "node_interfaces": [
+        { "uid": "ni-alt", "name": "STA:2G:0", "type": "WLAN", "opmode": "STA",
+          "mac_address": "AA:BB:CC:00:00:04", "node_links": [] }
+      ]
+    },
+    {
+      "uid": "n-5",
+      "device_name": "Repeater per LAN",
+      "device_model": "FRITZ!Repeater 6000",
+      "device_mac_address": "34:31:C4:00:00:20",
+      "is_meshed": true,
+      "mesh_role": "slave",
+      "node_interfaces": [
+        {
+          "uid": "ni-rep-lan",
+          "name": "LAN:1",
+          "type": "LAN",
+          "mac_address": "34:31:C4:00:00:20",
+          "node_links": []
+        },
+        {
+          "uid": "ni-rep-5g",
+          "name": "AP:5G:0",
+          "type": "WLAN",
+          "opmode": "AP",
+          "mac_address": "34:31:C4:00:00:21",
+          "current_channel": 36,
+          "current_channel_info": { "primary_freq": 5180000, "channel_width": "80 MHz" },
+          "node_links": [
+            {
+              "uid": "nl-4",
+              "type": "WLAN",
+              "state": "CONNECTED",
+              "node_1_uid": "n-5",
+              "node_2_uid": "n-6",
+              "node_interface_1_uid": "ni-rep-5g",
+              "node_interface_2_uid": "ni-cam",
+              "cur_data_rate_rx": 433300,
+              "cur_data_rate_tx": 433300,
+              "cur_availability_rx": 100,
+              "cur_availability_tx": 100,
+              "rx_rcpi": -61,
+              "rx_rsni": 28,
+              "tx_rcpi": 255,
+              "tx_rsni": 255
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "uid": "n-6",
+      "device_name": "Kamera Eingang",
+      "device_mac_address": "AA:BB:CC:00:00:06",
+      "mesh_role": "unknown",
+      "node_interfaces": [
+        { "uid": "ni-cam", "name": "STA:5G:0", "type": "WLAN", "opmode": "STA",
+          "mac_address": "AA:BB:CC:00:00:06", "node_links": [] }
+      ]
+    }
+  ]
+}

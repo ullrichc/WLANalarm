@@ -1,0 +1,24 @@
+# Start:  docker compose -f deploy/docker-compose.yml up -d
+#
+# Erwartet neben dieser Datei bzw. im gemounteten Verzeichnis:
+#   ./data/config.yaml   die Konfiguration
+#   ./data/.env          FRITZ_PASSWORD=... (und ggf. weitere Geheimnisse)
+services:
+  wlanalarm:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
+    image: wlanalarm
+    container_name: wlanalarm
+    restart: unless-stopped
+    # Damit die FRITZ!Box unter fritz.box erreichbar ist und das Dashboard
+    # im Heimnetz sichtbar wird. Alternativ ein eigenes Netz plus
+    # "ports: - 8723:8723" und web.host auf 0.0.0.0 samt Token.
+    network_mode: host
+    env_file:
+      - ./data/.env
+    volumes:
+      - ./data:/data
+    # Die Uhrzeit muss stimmen, sonst greifen Zeitpläne zur falschen Stunde.
+    environment:
+      - TZ=Europe/Berlin

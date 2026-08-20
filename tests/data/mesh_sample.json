@@ -1,0 +1,271 @@
+{
+  "schema_version": "1.9",
+  "nodes": [
+    {
+      "uid": "n-1",
+      "device_name": "fritz.box",
+      "device_model": "FRITZ!Box 5690 Pro",
+      "device_manufacturer": "AVM",
+      "device_firmware_version": "8.20",
+      "device_mac_address": "34:31:C4:00:00:01",
+      "is_meshed": true,
+      "mesh_role": "master",
+      "node_interfaces": [
+        {
+          "uid": "ni-lan",
+          "name": "LAN:1",
+          "type": "LAN",
+          "mac_address": "34:31:C4:00:00:01",
+          "node_links": []
+        },
+        {
+          "uid": "ni-5g",
+          "name": "WLAN 5GHz",
+          "type": "WLAN",
+          "mac_address": "34:31:C4:00:00:05",
+          "opmode": "AP_MODE",
+          "ssid": "Zuhause",
+          "supported_bands": ["BAND_5G"],
+          "current_channel": 100,
+          "node_links": [
+            {
+              "uid": "nl-1",
+              "type": "WLAN",
+              "state": "CONNECTED",
+              "node_1_uid": "n-1",
+              "node_2_uid": "n-2",
+              "node_interface_1_uid": "ni-5g",
+              "node_interface_2_uid": "ni-rep-5g-sta",
+              "max_data_rate_rx": 2402000,
+              "max_data_rate_tx": 2402000,
+              "cur_data_rate_rx": 1729000,
+              "cur_data_rate_tx": 1621000,
+              "cur_availability_rx": 100,
+              "rssi": -47,
+              "cur_rx_mcs": 11,
+              "cur_rx_nss": 2
+            },
+            {
+              "uid": "nl-2",
+              "type": "WLAN",
+              "state": "CONNECTED",
+              "node_1_uid": "n-1",
+              "node_2_uid": "n-3",
+              "node_interface_1_uid": "ni-5g",
+              "node_interface_2_uid": "ni-tv",
+              "cur_data_rate_rx": 780000,
+              "cur_data_rate_tx": 866000,
+              "rssi": -58,
+              "cur_rx_mcs": 9,
+              "cur_rx_nss": 2
+            },
+            {
+              "uid": "nl-3",
+              "type": "WLAN",
+              "state": "DISCONNECTED",
+              "node_1_uid": "n-1",
+              "node_2_uid": "n-6",
+              "node_interface_1_uid": "ni-5g",
+              "node_interface_2_uid": "ni-old",
+              "rssi": -80
+            }
+          ]
+        },
+        {
+          "uid": "ni-6g",
+          "name": "WLAN 6GHz",
+          "type": "WLAN",
+          "mac_address": "34:31:C4:00:00:06",
+          "opmode": "AP_MODE",
+          "ssid": "Zuhause",
+          "supported_bands": ["BAND_6G"],
+          "current_channel": 37,
+          "node_links": [
+            {
+              "uid": "nl-4",
+              "type": "WLAN",
+              "state": "CONNECTED",
+              "node_1_uid": "n-1",
+              "node_2_uid": "n-4",
+              "node_interface_1_uid": "ni-6g",
+              "node_interface_2_uid": "ni-speaker",
+              "cur_data_rate_rx": 1200000,
+              "cur_data_rate_tx": 1200000,
+              "rssi": -52,
+              "cur_rx_mcs": 10,
+              "cur_rx_nss": 2
+            }
+          ]
+        },
+        {
+          "uid": "ni-24g",
+          "name": "WLAN 2.4GHz",
+          "type": "WLAN",
+          "mac_address": "34:31:C4:00:00:04",
+          "opmode": "AP_MODE",
+          "supported_bands": ["BAND_2_4G"],
+          "current_channel": 6,
+          "node_links": [
+            {
+              "uid": "nl-5",
+              "type": "WLAN",
+              "state": "CONNECTED",
+              "node_1_uid": "n-1",
+              "node_2_uid": "n-5",
+              "node_interface_1_uid": "ni-24g",
+              "node_interface_2_uid": "ni-plug",
+              "cur_data_rate_rx": 72000,
+              "cur_data_rate_tx": 65000,
+              "rssi": -66
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "uid": "n-2",
+      "device_name": "Repeater Flur",
+      "device_model": "FRITZ!Repeater 6000",
+      "device_mac_address": "34:31:C4:00:00:20",
+      "is_meshed": true,
+      "mesh_role": "slave",
+      "node_interfaces": [
+        {
+          "uid": "ni-rep-5g-sta",
+          "name": "WLAN 5GHz",
+          "type": "WLAN",
+          "mac_address": "34:31:C4:00:00:20",
+          "opmode": "CLIENT_MODE",
+          "supported_bands": ["BAND_5G"],
+          "current_channel": 100,
+          "node_links": [
+            {
+              "uid": "nl-1",
+              "type": "WLAN",
+              "state": "CONNECTED",
+              "node_1_uid": "n-2",
+              "node_2_uid": "n-1",
+              "node_interface_1_uid": "ni-rep-5g-sta",
+              "node_interface_2_uid": "ni-5g",
+              "cur_data_rate_rx": 1621000,
+              "cur_data_rate_tx": 1729000
+            }
+          ]
+        },
+        {
+          "uid": "ni-rep-5g-ap",
+          "name": "WLAN 5GHz",
+          "type": "WLAN",
+          "mac_address": "34:31:C4:00:00:21",
+          "opmode": "AP_MODE",
+          "supported_bands": ["BAND_5G"],
+          "current_channel": 36,
+          "node_links": [
+            {
+              "uid": "nl-6",
+              "type": "WLAN",
+              "state": "CONNECTED",
+              "node_1_uid": "n-2",
+              "node_2_uid": "n-7",
+              "node_interface_1_uid": "ni-rep-5g-ap",
+              "node_interface_2_uid": "ni-cam",
+              "cur_data_rate_rx": 433000,
+              "cur_data_rate_tx": 433000,
+              "rssi": -61
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "uid": "n-3",
+      "device_name": "Fernseher",
+      "device_model": "LG OLED",
+      "device_mac_address": "AA:BB:CC:00:00:03",
+      "is_meshed": false,
+      "mesh_role": "client",
+      "node_interfaces": [
+        {
+          "uid": "ni-tv",
+          "name": "WLAN 5GHz",
+          "type": "WLAN",
+          "mac_address": "AA:BB:CC:00:00:03",
+          "opmode": "CLIENT_MODE",
+          "supported_bands": ["BAND_5G"],
+          "node_links": []
+        }
+      ]
+    },
+    {
+      "uid": "n-4",
+      "device_name": "Sonos Wohnzimmer",
+      "device_mac_address": "AA:BB:CC:00:00:04",
+      "is_meshed": false,
+      "mesh_role": "client",
+      "node_interfaces": [
+        {
+          "uid": "ni-speaker",
+          "name": "WLAN 6GHz",
+          "type": "WLAN",
+          "mac_address": "AA:BB:CC:00:00:04",
+          "opmode": "CLIENT_MODE",
+          "supported_bands": ["BAND_6G"],
+          "node_links": []
+        }
+      ]
+    },
+    {
+      "uid": "n-5",
+      "device_name": "Steckdose Kueche",
+      "device_mac_address": "AA:BB:CC:00:00:05",
+      "is_meshed": false,
+      "mesh_role": "client",
+      "node_interfaces": [
+        {
+          "uid": "ni-plug",
+          "name": "WLAN 2.4GHz",
+          "type": "WLAN",
+          "mac_address": "AA:BB:CC:00:00:05",
+          "opmode": "CLIENT_MODE",
+          "supported_bands": ["BAND_2_4G"],
+          "node_links": []
+        }
+      ]
+    },
+    {
+      "uid": "n-6",
+      "device_name": "Altes Tablet",
+      "device_mac_address": "AA:BB:CC:00:00:06",
+      "is_meshed": false,
+      "mesh_role": "client",
+      "node_interfaces": [
+        {
+          "uid": "ni-old",
+          "name": "WLAN 5GHz",
+          "type": "WLAN",
+          "mac_address": "AA:BB:CC:00:00:06",
+          "opmode": "CLIENT_MODE",
+          "node_links": []
+        }
+      ]
+    },
+    {
+      "uid": "n-7",
+      "device_name": "Kamera Eingang",
+      "device_mac_address": "AA:BB:CC:00:00:07",
+      "is_meshed": false,
+      "mesh_role": "client",
+      "node_interfaces": [
+        {
+          "uid": "ni-cam",
+          "name": "WLAN 5GHz",
+          "type": "WLAN",
+          "mac_address": "AA:BB:CC:00:00:07",
+          "opmode": "CLIENT_MODE",
+          "supported_bands": ["BAND_5G"],
+          "node_links": []
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,58 @@
+name: Fehlerbericht
+description: Etwas funktioniert nicht wie beschrieben
+labels: ["fehler"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Danke für die Meldung. Bei Problemen mit der Erkennung oder der
+        FRITZ!Box-Anbindung hilft der Diagnosebericht am meisten:
+
+        ```
+        wlanalarm diagnose -o diagnose.txt
+        ```
+
+        Er ersetzt Gerätenamen, MAC-Adressen und Netzwerknamen durch
+        Platzhalter und kann angehängt werden.
+
+  - type: textarea
+    id: beschreibung
+    attributes:
+      label: Was ist passiert?
+      description: Was haben Sie erwartet, was ist stattdessen geschehen?
+    validations:
+      required: true
+
+  - type: textarea
+    id: schritte
+    attributes:
+      label: Womit lässt es sich nachvollziehen?
+      placeholder: |
+        1. wlanalarm check
+        2. …
+    validations:
+      required: true
+
+  - type: input
+    id: fritzbox
+    attributes:
+      label: FRITZ!Box-Modell und FRITZ!OS-Version
+      description: Steht in der Ausgabe von `wlanalarm check`
+      placeholder: "FRITZ!Box 7590, FRITZ!OS 7.57"
+    validations:
+      required: true
+
+  - type: input
+    id: system
+    attributes:
+      label: Betriebssystem und Python-Version
+      placeholder: "Windows 11, Python 3.12"
+    validations:
+      required: true
+
+  - type: textarea
+    id: ausgabe
+    attributes:
+      label: Programmausgabe
+      description: Ausgabe von `wlanalarm check`, gern auch der Diagnosebericht
+      render: text
